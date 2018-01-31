@@ -1,4 +1,4 @@
-package io.github.fedimser.lambda.calculus;
+package io.github.fedimser.lambda.interpreter;
 
 public class SyntaxError extends Exception {
     public SyntaxError(String message) {

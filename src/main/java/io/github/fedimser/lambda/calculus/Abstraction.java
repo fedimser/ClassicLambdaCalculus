@@ -6,6 +6,6 @@ public class Abstraction extends Expression {
 
     @Override
     public String toString() {
-        return String.format("(λ%s.%s", variable.toString(), body.toString());
+        return String.format("(λ%s.%s)", variable.toString(), body.toString());
     }
 }
