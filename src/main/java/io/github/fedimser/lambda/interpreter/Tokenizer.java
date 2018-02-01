@@ -3,7 +3,7 @@ package io.github.fedimser.lambda.interpreter;
 import java.util.*;
 
 public class Tokenizer {
-    private static final List<Character> SPECIAL_CHARACTERS = Arrays.asList('λ', '.', '(', ')');
+    private static final List<Character> SPECIAL_CHARACTERS = Arrays.asList('λ', '.', '(', ')', '=');
 
     /**
      * Splits input string to tokens, by following rules:
@@ -14,34 +14,60 @@ public class Tokenizer {
      * @param expression
      * @return List of tokens in given string.
      */
-    public static List<String> tokenize(String expression) {
-        List<String> result = new ArrayList<String>();
-        StringBuilder sb = new StringBuilder();
+    public static List<Token> tokenizeFlat(String expression) {
+        List<Token> result = new ArrayList<Token>();
         int start=0;
         for(int i=0; i < expression.length();i++) {
             char currentChar = expression.charAt(i);
             if (SPECIAL_CHARACTERS.contains(currentChar)) {
-                if(sb.length()!=0) {
-                    result.add(sb.toString());
-                    sb.setLength(0);
-                }
-                result.add(Character.toString(currentChar));
+                if(i>start) result.add(new Token(expression.substring(start,i), start));
+                result.add(new Token(Character.toString(currentChar),i));
+                start=i+1;
             } else if (Character.isSpaceChar(currentChar) ) {
-                if(sb.length()!=0) {
-                    result.add(sb.toString());
-                    sb.setLength(0);
-                }
-            } else {
-                sb.append(currentChar);
+                if(i>start) result.add(new Token(expression.substring(start,i), start));
+                start=i+1;
             }
         }
 
-
-        if(sb.length()!=0) {
-            result.add(sb.toString());
-            sb.setLength(0);
-        }
+        if(expression.length()>start) result.add(new Token(expression.substring(start), start));
 
         return result;
+    }
+
+    private static List<Token> collectGroups(ListIterator<Token> iter) throws SyntaxErrorException {
+        return collectGroups(iter, false);
+    }
+
+    // Collects all to first ")".
+    // This ")" should be skipped by iterator by not included in answer.
+    private static List<Token> collectGroups(ListIterator<Token> iter, boolean isNested) throws SyntaxErrorException {
+        List<Token> collectedTokens = new ArrayList<Token>();
+        while(iter.hasNext()) {
+            Token token = iter.next();
+            if (token.hasText("(")) {
+                List<Token> nestedTokens = collectGroups(iter, true);
+                if(nestedTokens.isEmpty()) {
+                    throw new SyntaxErrorException("No tokens between parentheses.", token);
+                }
+                collectedTokens.add( new Token( nestedTokens));
+            } else if (token.hasText(")")) {
+                if(!isNested) {
+                    throw new SyntaxErrorException("Extra )", token);
+                }
+                return collectedTokens;
+            } else {
+                collectedTokens.add(token);
+            }
+        }
+
+        if(isNested) {
+            throw new SyntaxErrorException(") expected.", iter.previous());
+        }
+        return collectedTokens;
+    }
+
+    public static List<Token> tokenizeAndGroup(String expression) throws SyntaxErrorException {
+        List<Token> flatTokens = tokenizeFlat(expression);
+        return collectGroups(flatTokens.listIterator());
     }
 }

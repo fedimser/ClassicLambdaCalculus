@@ -34,4 +34,8 @@ public final class Abstraction extends Expression {
             return new Abstraction(this.variable, this.body.replace(var, value));
         }
     }
+
+    public Expression reduce() throws LambdaException {
+        return this;
+    }
 }

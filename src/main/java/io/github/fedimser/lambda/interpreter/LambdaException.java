@@ -4,4 +4,5 @@ public class LambdaException extends Exception {
   public LambdaException(String message){
       super(message);
   }
+
 }

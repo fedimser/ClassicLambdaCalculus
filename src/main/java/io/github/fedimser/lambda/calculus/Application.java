@@ -28,4 +28,8 @@ public final class Application extends Expression {
     public Expression replace(Variable var, Expression value) throws LambdaException {
         return new Application(function.replace(var, value), argument.replace(var, value));
     }
+
+    public Expression reduce() throws LambdaException {
+        return this;
+    }
 }
