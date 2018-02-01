@@ -1,9 +1,9 @@
 package io.github.fedimser.lambda.interpreter;
 
-import io.github.fedimser.lambda.calculus.Abstraction;
-import io.github.fedimser.lambda.calculus.Application;
-import io.github.fedimser.lambda.calculus.Expression;
-import io.github.fedimser.lambda.calculus.Variable;
+import io.github.fedimser.lambda.calculus.LbdAbstraction;
+import io.github.fedimser.lambda.calculus.LbdApplication;
+import io.github.fedimser.lambda.calculus.LbdExpression;
+import io.github.fedimser.lambda.calculus.LbdVariable;
 
 import java.util.*;
 
@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class LambdaInterpreter {
     private static final String[] reservedWords = {"exit", "alias"};
-    private Map<String, Expression> expressions = new HashMap<String, Expression>(); //
+    private Map<String, LbdExpression> expressions = new HashMap<String, LbdExpression>(); //
     private Set<String> libraryNames = new HashSet<String>();
 
     private boolean exited;
@@ -41,14 +41,14 @@ public class LambdaInterpreter {
 
             if (tokens.size() >=3 && tokens.get(1).hasText("=")) {
                 String name = tokens.get(0).getText();
-                Expression expression = parseTokenGroup(tokens.subList(2, tokens.size()));
+                LbdExpression expression = parseTokenGroup(tokens.subList(2, tokens.size())).reduce();
                 storeUserExpression(name, expression);
                 return "";
             } else if (tokens.size() >=2 && tokens.get(0).hasText("alias")) {
                 throw new LambdaException("alias not implemented yet");
             } else {
-                Expression expression = parseTokenGroup(tokens);
-                return expression.reduce().toString();
+                LbdExpression expression = parseTokenGroup(tokens).reduce();
+                return expression.toString();
             }
         } catch (LambdaException ex) {
           return "Error: " + ex.getMessage();
@@ -56,17 +56,17 @@ public class LambdaInterpreter {
     }
 
 
-    private Expression parseToken(Token token) throws SyntaxErrorException {
+    private LbdExpression parseToken(Token token) throws SyntaxErrorException {
         if(token.isGroup()) {
             return parseTokenGroup(token.getNestedTokens());
         } else {
             // This is variable or alias.
-            Expression aliasedExpr = getExpressionByAlias(token.getText());
-            return (aliasedExpr!=null) ? aliasedExpr : new Variable(token);
+            LbdExpression aliasedExpr = getExpressionByAlias(token.getText());
+            return (aliasedExpr!=null) ? aliasedExpr : new LbdVariable(token);
         }
     }
 
-    private Expression parseTokenGroup(List<Token> tokens) throws SyntaxErrorException {
+    private LbdExpression parseTokenGroup(List<Token> tokens) throws SyntaxErrorException {
         int n = tokens.size();
         if(n==1) {
             return parseToken(tokens.get(0));
@@ -76,7 +76,7 @@ public class LambdaInterpreter {
             // This is lambda abstraction.
             List<Token> vars = new ArrayList<Token>();
 
-            int dotIndex=n;
+            int dotIndex=-1;
             for(int i=1;i<n;i++) {
                 Token token = tokens.get(i);
                 if(token.hasText(".")) {
@@ -87,53 +87,55 @@ public class LambdaInterpreter {
                 }
             }
             if(vars.isEmpty()) {
-                throw new SyntaxErrorException("Variable name expected after λ.", tokens.get(0));
+                throw new SyntaxErrorException("LbdVariable name expected after λ.", tokens.get(0));
             } else if (dotIndex == -1) {
                 throw new SyntaxErrorException("Dot expected", tokens.get(n-1));
             } else if (dotIndex == n-1) {
-                throw new SyntaxErrorException("Expression expected", tokens.get(n-1));
+                throw new SyntaxErrorException("LbdExpression expected", tokens.get(n-1));
             }
 
             Collections.reverse(vars);
 
-            Expression body = parseTokenGroup(tokens.subList(dotIndex+1, n));
+            LbdExpression body = parseTokenGroup(tokens.subList(dotIndex+1, n));
             for (Token var : vars) {
-                body = new Abstraction(new Variable(var), body);
+                body = new LbdAbstraction(new LbdVariable(var), body);
             }
             return body;
         } else {
-            Expression ret = new Application(parseToken(tokens.get(0)), parseToken(tokens.get(1)));
+            LbdExpression ret = new LbdApplication(parseToken(tokens.get(0)), parseToken(tokens.get(1)));
             for(int i=2;i<n;i++) {
-                ret = new Application(ret,  parseToken(tokens.get(i)));
+                ret = new LbdApplication(ret,  parseToken(tokens.get(i)));
             }
             return ret;
         }
     }
 
 
-    private Expression parseExpression(String expression) throws SyntaxErrorException {
+    private LbdExpression parseExpression(String expression) throws SyntaxErrorException {
         return parseTokenGroup(Tokenizer.tokenizeAndGroup(expression));
     }
 
     private void storeLibraryExpression(String name, String expression) throws LambdaException {
         libraryNames.add(name);
-        expressions.put(name, parseExpression(expression));
+        expressions.put(name, parseExpression(expression).reduce());
     }
 
-    private void storeUserExpression(String name, Expression expression) throws LambdaException {
+    private void storeUserExpression(String name, LbdExpression expression) throws LambdaException {
         if(libraryNames.contains(name)) {
             throw new LambdaException("Name " + name + "is reserved for library expression.");
         }
         expressions.put(name, expression);
     }
 
-    private Expression getExpressionByAlias(String name) {
+    private LbdExpression getExpressionByAlias(String name) {
         return expressions.get(name);
     }
 
     private void loadLibrary() throws LambdaException {
         storeLibraryExpression("ID", "λx.x");
         storeLibraryExpression("1", "ID");
+        storeLibraryExpression("0", "λx y.y");
+        storeLibraryExpression("2", "λx y.x(x(y))");
         storeLibraryExpression("INC", "λ a b c.b(a b c)");
         storeLibraryExpression("SUM", "λ a b. a INC b");
         storeLibraryExpression("MUL", "λ a b c. a(b c)");

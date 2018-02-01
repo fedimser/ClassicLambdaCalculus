@@ -1,6 +1,5 @@
 package io.github.fedimser.lambda.interpreter;
 
-import io.github.fedimser.lambda.calculus.Expression;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
