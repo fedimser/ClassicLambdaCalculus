@@ -13,6 +13,7 @@ import java.util.*;
 public class LambdaInterpreter {
     private static final String[] reservedWords = {"exit", "alias"};
     private Map<String, LbdExpression> expressions = new HashMap<String, LbdExpression>();
+    private Map<LbdExpression, List<String> > inverseIndex = new HashMap<LbdExpression, List<String> >();
     private Set<String> libraryNames = new HashSet<String>();
 
     private boolean exited;
@@ -44,10 +45,16 @@ public class LambdaInterpreter {
             if (tokens.size() >=3 && tokens.get(1).hasText("=")) {
                 String name = tokens.get(0).getText();
                 LbdExpression expression = parseTokenGroup(tokens.subList(2, tokens.size())).reduce();
-                storeUserExpression(name, expression);
+                storeExpression(name, expression);
                 return "";
             } else if (tokens.size() >=2 && tokens.get(0).hasText("alias")) {
-                throw new LambdaException("alias not implemented yet");
+                LbdExpression expression = parseTokenGroup(tokens.subList(1, tokens.size())).reduce();
+                List<String> names = inverseIndex.get(expression);
+                if(names == null) {
+                    return "None.";
+                } else {
+                    return String.join(", ", names);
+                }
             } else {
                 LbdExpression expression = parseTokenGroup(tokens).reduce();
                 return expression.getClassicFormula();
@@ -58,7 +65,7 @@ public class LambdaInterpreter {
     }
 
     public LbdExpression evaluate(String expression) throws LambdaException {
-        return parseExpression(expression).reduce();
+        return parseTokenGroup(Tokenizer.tokenizeAndGroup(expression)).reduce();
     }
 
 
@@ -122,25 +129,26 @@ public class LambdaInterpreter {
     private LbdExpression parseTokenGroup(List<Token> tokens) throws SyntaxErrorException {
         return parseTokenGroup(tokens, new VariableStack());
     }
-        private LbdExpression parseExpression(String expression) throws SyntaxErrorException {
-        return parseTokenGroup(Tokenizer.tokenizeAndGroup(expression));
-    }
+
+
 
     private void storeLibraryExpression(String name, String expression) throws LambdaException {
+        storeExpression(name, evaluate(expression));
         libraryNames.add(name);
-        try {
-            expressions.put(name, parseExpression(expression).reduce());
-        } catch (LambdaException e) {
-            System.out.println("Bad lib expression: "+ expression);
-            throw e;
-        }
     }
 
-    private void storeUserExpression(String name, LbdExpression expression) throws LambdaException {
+    private void storeExpression(String name, LbdExpression expression) throws LambdaException {
         if(libraryNames.contains(name)) {
             throw new LambdaException("Name " + name + "is reserved for library expression.");
         }
         expressions.put(name, expression);
+        if(inverseIndex.containsKey(expression)) {
+            inverseIndex.get(expression).add(name);
+        } else {
+            List<String> newList = new ArrayList<String>();
+            newList.add(name);
+            inverseIndex.put(expression, newList);
+        }
     }
 
     private LbdExpression getExpressionByAlias(String name) {
