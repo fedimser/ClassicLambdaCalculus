@@ -2,6 +2,7 @@ package io.github.fedimser.lambda.calculus;
 
 
 import io.github.fedimser.lambda.interpreter.LambdaException;
+import io.github.fedimser.lambda.interpreter.VariableStack;
 
 public final class LbdApplication extends LbdExpression {
     private final LbdExpression function;
@@ -20,46 +21,55 @@ public final class LbdApplication extends LbdExpression {
         return argument;
     }
 
-    @Override
-    public String toString() {
-        return String.format("(%s %s)", function.toString(), argument.toString());
-    }
-
-    public LbdExpression replace(LbdVariable var, LbdExpression value) throws LambdaException {
-        return new LbdApplication(function.replace(var, value), argument.replace(var, value));
-    }
-
     public LbdExpression reduce() throws LambdaException {
         // Try beta-reduction, namely:
         // (λx.y)z => y[x->z]
-        if(this.function instanceof LbdAbstraction){
+        if(this.function instanceof LbdAbstraction) {
             LbdAbstraction lxy = (LbdAbstraction) this.function;
-            String x = lxy.getVariable().getName();
-            LbdExpression y = lxy.getBody();
-            LbdExpression reduced = y.replaceFree(x, this.argument);
-            return reduced.reduce();
+            return lxy.getBody().betaReduction(1, this.argument).reduce();
         }
 
-        LbdExpression reducedFunction = function.reduce();
-        LbdExpression reducedArgument = argument.reduce();
-        if(reducedFunction!=function || reducedArgument!=argument) {
-            return (new LbdApplication(reducedFunction, reducedArgument)).reduce();
+        LbdExpression newFunction = function.reduce();
+        LbdExpression newArgument = argument.reduce();
+        if(newFunction!=function || newArgument!=argument) {
+            return (new LbdApplication(newFunction, newArgument)).reduce();
         }
 
         return this;
     }
 
     @Override
-    public LbdExpression replaceFree(String var, LbdExpression replaceTo) throws LambdaException {
-        if(hasFree(var)) {
-            return new LbdApplication(function.replaceFree(var, replaceTo), argument.replaceFree(var, replaceTo));
-        } else {
-            return this;
+    protected LbdExpression betaReduction(int level, LbdExpression replacement) throws LambdaException {
+        LbdExpression newFunction = function.betaReduction(level, replacement);
+        LbdExpression newArgument = argument.betaReduction(level, replacement);
+        if(newFunction!=function || newArgument!=argument) {
+            return (new LbdApplication(newFunction, newArgument)).reduce();
         }
+        return this;
     }
 
     @Override
-    public boolean hasFree(String var) {
-        return function.hasFree(var) || argument.hasFree(var);
+    protected boolean hasVariable(int level) throws LambdaException {
+        return function.hasVariable(level) || argument.hasVariable(level);
+    }
+
+    @Override
+    protected LbdExpression increaseFreeIndices(int level) throws LambdaException {
+        LbdExpression newFunction = function.increaseFreeIndices(level);
+        LbdExpression newArgument = argument.increaseFreeIndices(level);
+        if(newFunction!=function || newArgument!=argument) {
+            return (new LbdApplication(newFunction, newArgument)).reduce();
+        }
+        return this;
+    }
+
+    @Override
+    protected String getClassicFormula(VariableStack vStack) {
+        return String.format("(%s %s)", function.getClassicFormula(vStack), argument.getClassicFormula(vStack));
+    }
+
+    @Override
+    public String getDeBruijnFormula() {
+        return String.format("(%s %s)", function.getDeBruijnFormula(), argument.getDeBruijnFormula());
     }
 }

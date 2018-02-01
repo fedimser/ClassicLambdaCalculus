@@ -12,4 +12,5 @@ public class LambdaInterpreterTest extends TestCase {
         interpreter.processCommand("exit");
         assertTrue(interpreter.isExited());
     }
+
 }

@@ -7,6 +7,10 @@ public class Token {
     private int start;
     private List<Token> nestedTokens=null;
 
+    public Token(String text) {
+        this.text = text;
+    }
+
     public Token(String text, int start) {
         this.text = text;
         this.start = start;

@@ -3,51 +3,32 @@ package io.github.fedimser.lambda.calculus;
 
 import io.github.fedimser.lambda.interpreter.LambdaException;
 import io.github.fedimser.lambda.interpreter.SyntaxErrorException;
+import io.github.fedimser.lambda.interpreter.VariableStack;
 
 
 public final class LbdAbstraction extends LbdExpression {
-    private final LbdVariable variable;
     private final LbdExpression body;
 
-    public LbdAbstraction(LbdVariable variable, LbdExpression body) {
-        this.variable = variable;
+    public LbdAbstraction(LbdExpression body) {
         this.body = body;
     }
 
-    public LbdVariable getVariable() {
-        return variable;
-    }
 
     public LbdExpression getBody() {
-
         return body;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("(λ%s.%s)", variable.toString(), body.toString());
-    }
-
-    public LbdExpression replace(LbdVariable var, LbdExpression value) throws LambdaException {
-        if(this.variable.getName().equals(var.getName())){
-            throw new SyntaxErrorException("Clashing variable names.");
-        } else {
-            return new LbdAbstraction(this.variable, this.body.replace(var, value));
-        }
     }
 
     public LbdExpression reduce() throws LambdaException {
         // Try eta-conversion, namely:
-        // λx.(f x2) => f, if x=x2 and f doesn't have free x.
+        // λx.(f x) => f, if f doesn't have free x.
         if (body instanceof LbdApplication){
             LbdApplication fx = (LbdApplication)body;
             LbdExpression x2 =  ((LbdApplication)body).getArgument();
-            String x = variable.getName();
             if(x2 instanceof LbdVariable) {
-                if(((LbdVariable)x2).getName().equals(x)) {
+                if(((LbdVariable)x2).getDeBruijnIndex() == 1) {
                     LbdExpression f = fx.getFunction();
-                    if(!f.hasFree(x)) {
-                        return f;
+                    if(!f.hasVariable(1)) {
+                        return f.betaReduction(1, null).reduce();
                     }
                 }
             }
@@ -56,23 +37,44 @@ public final class LbdAbstraction extends LbdExpression {
         // Try reduce body.
         LbdExpression reducedBody = body.reduce();
         if (reducedBody != body) {
-           return new LbdAbstraction(this.variable, reducedBody);
+           return (new LbdAbstraction(reducedBody)).reduce();
         }
 
         return this;
     }
 
     @Override
-    public LbdExpression replaceFree(String var, LbdExpression replaceTo) throws LambdaException {
-        if(hasFree(var)) {
-            return new LbdAbstraction(this.variable, this.body.replaceFree(var, replaceTo));
-        } else {
-            return this;
+    protected LbdExpression betaReduction(int level, LbdExpression replacement) throws LambdaException {
+        LbdExpression newReplacement = (replacement == null)?null : replacement.increaseFreeIndices(level);
+        LbdExpression reducedBody = body.betaReduction(level+1, newReplacement) ;
+        if (reducedBody != body) {
+            return (new LbdAbstraction(reducedBody)).reduce();
         }
+
+        return this;
     }
 
     @Override
-    public boolean hasFree(String var) {
-        return !(variable.getName().equals(var)) && body.hasFree(var);
+    protected boolean hasVariable(int level) throws LambdaException {
+        return body.hasVariable(level+1);
     }
+
+    @Override
+    protected LbdExpression increaseFreeIndices(int level) throws LambdaException {
+        return new LbdAbstraction(this.body.increaseFreeIndices(level+1));
+    }
+
+    @Override
+    protected String getClassicFormula(VariableStack vStack) {
+        String varName = vStack.pushDefault();
+        String result = String.format("(λ%s.%s)", varName, body.getClassicFormula(vStack));
+        vStack.pop();
+        return result;
+    }
+
+    @Override
+    public String getDeBruijnFormula() {
+        return  String.format("(λ %s)", body.getDeBruijnFormula());
+    }
+
 }
