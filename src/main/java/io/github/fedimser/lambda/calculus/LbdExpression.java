@@ -2,10 +2,23 @@ package io.github.fedimser.lambda.calculus;
 
 
 import io.github.fedimser.lambda.interpreter.LambdaException;
+import io.github.fedimser.lambda.interpreter.LambdaInterpreter;
 import io.github.fedimser.lambda.interpreter.VariableStack;
+
+import java.util.EnumMap;
+import java.util.Map;
 
 
 public abstract class LbdExpression {
+    public enum FormulaStyle {
+        CLASSIC,
+        DE_BRUIJN,
+        SHORT,
+        SHORT_DE_BRUIJN
+    }
+
+    private Map<FormulaStyle, String> cachedFormulas =
+            new EnumMap<FormulaStyle, String>(FormulaStyle.class);
 
     /**
      * Applies beta-reduction and eta-conversion where possible.
@@ -13,8 +26,16 @@ public abstract class LbdExpression {
      * @return
      * @throws LambdaException
      */
-    public abstract LbdExpression reduce() throws LambdaException;
+    protected abstract LbdExpression reduce() throws LambdaException;
 
+
+    public LbdExpression safeReduce() throws LambdaException {
+        try {
+            return this.reduce();
+        } catch (StackOverflowError ex) {
+            throw new LambdaException("Stack overflow");
+        }
+    }
 
     /**
      * Affects all variables with de Bruijn index more than level.
@@ -44,32 +65,72 @@ public abstract class LbdExpression {
      */
     protected abstract LbdExpression increaseFreeIndices(int level) throws LambdaException;
 
-    public Byte[] deBruijnCode(){
-        return null;
-    }
 
-    public String getClassicFormula() {
-        return getClassicFormula(new VariableStack());
-    }
+
+
 
     protected abstract String getClassicFormula(VariableStack vStack);
 
-    public String shortFormula() {
-        return "";
+    protected abstract String getDeBruijnFormula();
+
+    protected abstract String getShortFormula(VariableStack vStack) throws LambdaException;
+
+    protected abstract String getShortDeBruijnFormula() throws LambdaException;
+
+
+    /**
+     * Returns string representation of this expression.
+     * For example, for Church's number 2:
+     *  - Classic formula is "(λa.(λb.(a (a b))))";
+     *  - De Bruijn formula is "(λ (λ (2 (2 1))))".
+     *  - Short formula is "λab.a(ab)"
+     *  - Short De Bruijn formula is "λλ2(21)".
+     * @param style Variant of lambda notation.
+     * @return Formula.
+     */
+    public String getFormula(FormulaStyle style) {
+        if (cachedFormulas.containsKey(style)) {
+            return cachedFormulas.get(style);
+        }
+        String result = "";
+
+        if(style == FormulaStyle.CLASSIC) {
+            result = getClassicFormula(new VariableStack());
+        } else if (style == FormulaStyle.DE_BRUIJN) {
+            result = getDeBruijnFormula();
+        } else if (style == FormulaStyle.SHORT) {
+            try {
+                return getShortFormula(new VariableStack());
+            } catch (LambdaException e) {
+                return "Error: " + e.getMessage();
+            }
+        } else if (style == FormulaStyle.SHORT_DE_BRUIJN) {
+            try {
+                return getShortDeBruijnFormula();
+            } catch (LambdaException e) {
+                return "Error: " + e.getMessage();
+            }
+        }
+
+        cachedFormulas.put(style, result);
+        return result;
     }
 
-    public abstract String getDeBruijnFormula();
+    @Override
+    public String toString() {
+        return this.getFormula(FormulaStyle.DE_BRUIJN);
+    }
 
     @Override
     public boolean equals(Object obj) {
         if (this==obj) return true;
         if (!(obj instanceof LbdExpression)) return false;
         LbdExpression second = (LbdExpression)obj;
-        return this.getDeBruijnFormula().equals(second.getDeBruijnFormula());
+        return this.toString().equals(second.toString());
     }
 
     @Override
     public int hashCode() {
-        return this.getDeBruijnFormula().hashCode();
+        return this.toString().hashCode();
     }
 }

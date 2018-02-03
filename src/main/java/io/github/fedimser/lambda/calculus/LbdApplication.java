@@ -72,4 +72,26 @@ public final class LbdApplication extends LbdExpression {
     public String getDeBruijnFormula() {
         return String.format("(%s %s)", function.getDeBruijnFormula(), argument.getDeBruijnFormula());
     }
+
+    @Override
+    protected String getShortFormula(VariableStack vStack) throws LambdaException {
+        String f1 = function.getShortFormula(vStack);
+        String f2 = argument.getShortFormula(vStack);
+        if(argument instanceof LbdApplication) {
+            return String.format("%s(%s)", f1, f2);
+        } else {
+            return String.format("%s%s", f1, f2);
+        }
+    }
+
+    @Override
+    protected String getShortDeBruijnFormula() throws LambdaException {
+        String f1 = function.getShortDeBruijnFormula();
+        String f2 = argument.getShortDeBruijnFormula();
+        if(argument instanceof LbdApplication) {
+            return String.format("%s(%s)", f1, f2);
+        } else {
+            return String.format("%s%s", f1, f2);
+        }
+    }
 }

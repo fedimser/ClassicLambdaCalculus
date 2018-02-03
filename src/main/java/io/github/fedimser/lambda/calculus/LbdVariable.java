@@ -8,8 +8,6 @@ import io.github.fedimser.lambda.interpreter.VariableStack;
 import java.beans.Expression;
 
 public final class LbdVariable extends LbdExpression {
-    public final static String VARIABLE_REGEX = "^[a-zA-Z_$][a-zA-Z_$0-9]*$";
-
     private final int deBruijnIndex;
 
     private LbdVariable(int deBruijnIndex) {
@@ -66,5 +64,18 @@ public final class LbdVariable extends LbdExpression {
     @Override
     public String getDeBruijnFormula() {
         return String.valueOf(this.deBruijnIndex);
+    }
+
+    @Override
+    protected String getShortFormula(VariableStack vStack) throws LambdaException {
+        String name = vStack.getNameForDeBruijnIndex(deBruijnIndex);
+        if (name.length()!=1) throw new LambdaException("Too deep for short style");
+        return name;
+    }
+
+    @Override
+    protected String getShortDeBruijnFormula() throws LambdaException {
+        if (deBruijnIndex >= 10) throw new LambdaException("Too deep for short style");
+        return String.valueOf(deBruijnIndex);
     }
 }

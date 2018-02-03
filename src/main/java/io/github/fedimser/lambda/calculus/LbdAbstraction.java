@@ -77,4 +77,28 @@ public final class LbdAbstraction extends LbdExpression {
         return  String.format("(λ %s)", body.getDeBruijnFormula());
     }
 
+    @Override
+    protected String getShortFormula(VariableStack vStack) throws LambdaException {
+        LbdExpression abs = this;
+        StringBuilder variables = new StringBuilder();
+        int depthCtr=0;
+        while (abs instanceof LbdAbstraction) {
+            variables.append(vStack.pushDefault());
+            abs = ((LbdAbstraction)abs).body;
+            depthCtr++;
+        }
+
+        String result = String.format("λ%s.%s", variables.toString(), abs.getShortFormula(vStack));
+
+        for(int i=0;i<depthCtr;i++) {
+            vStack.pop();
+        }
+        return result;
+    }
+
+    @Override
+    protected String getShortDeBruijnFormula() throws LambdaException {
+        return  String.format("λ%s", body.getShortDeBruijnFormula());
+    }
+
 }

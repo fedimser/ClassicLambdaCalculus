@@ -5,6 +5,7 @@ import io.github.fedimser.lambda.calculus.LbdVariable;
 import java.util.Stack;
 
 public class VariableStack {
+    private static final String VARIABLE_NAME_REGEX = "^[a-zA-Z_$][a-zA-Z_$0-9]*$";
     private static final int MAXIMAL_DEPTH = 256;
     private static final String[] DEFAULT_VAR_NAMES = new String[]{
             "a","b","c","d","e","f","g","h","i","j","k","l","m",
@@ -24,11 +25,11 @@ public class VariableStack {
         for(int i=top-1, idx=1;i>=0;i--,idx++) {
             if (stack[i].equals(varName)) return idx;
         }
-        throw new SyntaxErrorException("Stray free variable", token);
+        throw new SyntaxErrorException("Stray free variable " + token.getText(), token);
     }
 
     public void push(Token token) throws SyntaxErrorException {
-        if(! token.getText().matches(LbdVariable.VARIABLE_REGEX)) {
+        if(!token.getText().matches(VARIABLE_NAME_REGEX)) {
             throw new SyntaxErrorException("Bad variable name: " + token.getText(), token);
         }
         stack[top++] = token.getText();
