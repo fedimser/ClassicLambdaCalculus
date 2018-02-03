@@ -214,11 +214,12 @@ public class LambdaInterpreter {
         // Identity function.
         storeLibraryExpression("ID", "λx.x");
 
-        // Arithmetic.
+        // Basic arithmetic.
         storeLibraryExpression("INC", "λ a b c.b(a b c)");
+        storeLibraryExpression("SUC", "INC");
         storeLibraryExpression("SUM", "λ a b. a INC b");
+        storeLibraryExpression("PLUS", "SUM");
         storeLibraryExpression("MUL", "λ a b c. a(b c)");
-        //storeLibraryExpression("POW", "λ a b. (b (λ x . MUL a x) ) ID");
         storeLibraryExpression("POW", "λ a b. b a");
         storeLibraryExpression("SQUARE", "λ x . MUL x x");
 
@@ -241,9 +242,10 @@ public class LambdaInterpreter {
         storeLibraryExpression("PRED", "λn.n Φ(λ z.z 0 0)FALSE");
         storeLibraryExpression("SUB", "λ a b. b PRED a");
 
+
         // Equality and inequalities.
-        storeLibraryExpression("IS_ZERO", "λ x. x FALSE NOT FALSE");
-        storeLibraryExpression("GTE", "λ x y. IS_ZERO(x PRED y)");  // Greater than or equal.
+        storeLibraryExpression("ISZERO", "λ x. x FALSE NOT FALSE");
+        storeLibraryExpression("GTE", "λ x y. ISZERO(x PRED y)");  // Greater than or equal.
         storeLibraryExpression("LTE", "λ x y. GTE y x");  // Less than or equal.
         storeLibraryExpression("GT", "λ x y. GTE x (INC y)");  // Greater than.
         storeLibraryExpression("LT", "λ x y. GTE y (INC x)");  // Less than.
@@ -253,6 +255,9 @@ public class LambdaInterpreter {
         storeLibraryExpression("PAIR", "λa b f.f a b");
         storeLibraryExpression("FIRST", "λp.p(λa b.a)");
         storeLibraryExpression("SECOND", "λp.p(λa b.b)");
+        storeLibraryExpression("CAR", "FIRST");
+        storeLibraryExpression("CDR", "SECOND");
+        storeLibraryExpression("NIL", "λx.TRUE");
 
         // Cycle.
         // FOR n f c == c(c(...c(c(f(0), f(1)),f(2))..),f(n)).
