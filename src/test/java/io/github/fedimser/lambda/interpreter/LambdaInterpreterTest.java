@@ -42,7 +42,7 @@ public class LambdaInterpreterTest extends TestCase {
         // This checks that when we re-assign variable, old reference is removed from inverse index.
         assertEquals("OK.", li.processCommand("myVar1 = SUM"));
         assertEquals("myVar2", li.processCommand("alias " + expr));
-        assertEquals("SUM, myVar1", li.processCommand("alias SUM"));
+        assertEquals("PLUS, SUM, myVar1", li.processCommand("alias SUM"));
     }
 
     public void testPrintStyles() {

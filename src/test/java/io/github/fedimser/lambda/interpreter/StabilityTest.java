@@ -27,7 +27,7 @@ public class StabilityTest extends TestCase {
     public void testStability() throws Exception {
         check("ID", "SUM", "MUL", "SUB", "INC", "PRED", "POW");
         check("TRUE", "FALSE", "NOT", "AND", "OR");
-        check("IS_ZERO", "GTE", "LTE", "GT", "LT", "EQUALS");
+        check("ISZERO", "GTE", "LTE", "GT", "LT", "EQUALS");
         check("PAIR", "FIRST", "SECOND");
         check("FOR", "FACTORIAL");
     }

@@ -133,9 +133,9 @@ public class LibraryTest extends TestCase {
     }
 
     public void testComparison() throws Exception {
-        check("IS_ZERO 0", "TRUE");
-        check("IS_ZERO 1", "FALSE");
-        check("IS_ZERO 10", "FALSE");
+        check("ISZERO 0", "TRUE");
+        check("ISZERO 1", "FALSE");
+        check("ISZERO 10", "FALSE");
 
         check("EQUALS 0 0", "TRUE");
         check("EQUALS 1 1", "TRUE");
