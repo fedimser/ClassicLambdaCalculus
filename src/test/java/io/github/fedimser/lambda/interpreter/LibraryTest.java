@@ -1,16 +1,13 @@
 package io.github.fedimser.lambda.interpreter;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
-
-import java.beans.Expression;
 
 public class LibraryTest extends TestCase {
     private LambdaInterpreter li = new LambdaInterpreter();
 
     // Checks that both expression are reduced to the same expression.
     private void check(String exp1, String exp2) throws Exception {
-        assertTrue(li.evaluate(exp1).equals(li.evaluate(exp2)));
+        assertTrue(li.parseReduce(exp1).equals(li.parseReduce(exp2)));
     }
 
     public void testIncrement() throws Exception {
@@ -80,6 +77,10 @@ public class LibraryTest extends TestCase {
         check("MUL 5 4" ,"20");
         check("MUL 5 7" ,"35");
         check("MUL 11 9" ,"99");
+    }
+
+    public void testDivision() throws Exception {
+        //check("IDIV 4 2" ,"2");
     }
 
     public void testSquare() throws Exception {

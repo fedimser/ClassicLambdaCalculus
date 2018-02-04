@@ -2,10 +2,7 @@ package io.github.fedimser.lambda.interpreter;
 
 import io.github.fedimser.lambda.calculus.LbdExpression;
 import io.github.fedimser.lambda.calculus.LbdExpression.FormulaStyle;
-import io.github.fedimser.lambda.interpreter.LambdaInterpreter;
 import junit.framework.TestCase;
-
-import java.beans.Expression;
 
 public class StabilityTest extends TestCase {
     private LambdaInterpreter li = new LambdaInterpreter();
@@ -16,9 +13,9 @@ public class StabilityTest extends TestCase {
     // Checks that given string is classic formula of expression it describes.both formulas are the same.
     private void check(String... formulas) throws Exception {
         for(String f : formulas) {
-            LbdExpression ex1 = li.evaluate(f);
+            LbdExpression ex1 = li.parseReduce(f);
             String s1 = ex1.getFormula(FormulaStyle.CLASSIC);
-            LbdExpression ex2 = li.evaluate(s1);
+            LbdExpression ex2 = li.parseReduce(s1);
             String s2 = ex2.getFormula(FormulaStyle.CLASSIC);
             assertEquals(s1, s2);
         }

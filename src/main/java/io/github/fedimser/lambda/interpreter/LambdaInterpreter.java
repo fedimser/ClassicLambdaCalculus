@@ -1,11 +1,9 @@
 package io.github.fedimser.lambda.interpreter;
 
-import io.github.fedimser.lambda.calculus.LbdAbstraction;
-import io.github.fedimser.lambda.calculus.LbdApplication;
-import io.github.fedimser.lambda.calculus.LbdExpression;
+import io.github.fedimser.lambda.calculus.*;
 import io.github.fedimser.lambda.calculus.LbdExpression.FormulaStyle;
-import io.github.fedimser.lambda.calculus.LbdVariable;
 
+import java.beans.Expression;
 import java.util.*;
 
 /**
@@ -59,6 +57,8 @@ public class LambdaInterpreter {
      */
     public String processCommand(String command) {
         assert (!exited);
+        RecursionControlStack.INSTANCE.reset();
+
         try {
             List<Token> tokens = Tokenizer.tokenizeAndGroup(command);
             if (tokens.size() == 0) {
@@ -104,14 +104,24 @@ public class LambdaInterpreter {
 
     /**
      * Parses and safeReduces given string to lambda expression in normal form.
-     * @param expression Expression to evaluate as string.
-     * @return safeReduced expression.
+     * @param formula Expression to parseReduce as string.
+     * @return parsed and reduced expression.
      * @throws LambdaException When given expression is not syntactically correct or can't be evaluated.
      */
-    public LbdExpression evaluate(String expression) throws LambdaException {
-        return parseTokenGroup(Tokenizer.tokenizeAndGroup(expression)).safeReduce();
+    public LbdExpression parseReduce(String formula) throws LambdaException {
+        return parse(formula).safeReduce();
     }
 
+
+    /**
+     * Parses given formula.
+     * @param formula Formula
+     * @return Parsed expression.
+     * @throws SyntaxErrorException If formula is not syntactically correct.
+     */
+    public LbdExpression parse(String formula) throws SyntaxErrorException {
+        return parseTokenGroup(Tokenizer.tokenizeAndGroup(formula));
+    }
 
     private LbdExpression parseToken(Token token, VariableStack vStack) throws SyntaxErrorException {
         if(token.isGroup()) {
@@ -119,7 +129,15 @@ public class LambdaInterpreter {
         } else {
             // This is variable or alias.
             LbdExpression aliasedExpr = getExpressionByAlias(token.getText());
-            return (aliasedExpr!=null) ? aliasedExpr : LbdVariable.forIndex(vStack.getDeBruijnIndex(token));
+            if(aliasedExpr!=null){
+                return aliasedExpr;
+            } else {
+                try {
+                    return LbdVariable.forIndex(vStack.getDeBruijnIndex(token));
+                } catch (DepthException e) {
+                    throw new SyntaxErrorException("Too deep", token);
+                }
+            }
         }
     }
 
@@ -178,9 +196,9 @@ public class LambdaInterpreter {
 
     private void storeLibraryExpression(String name, String expression) throws LambdaException {
         try {
-            storeExpression(name, evaluate(expression));
+            storeExpression(name, parse(expression).safeReduce());
         } catch (LambdaException e) {
-            System.out.println("Couldn't evaluate: " + expression);
+            System.out.println("Couldn't parseReduce: " + expression);
             throw e;
         }
         libraryNames.add(name);
@@ -216,7 +234,7 @@ public class LambdaInterpreter {
 
         // Basic arithmetic.
         storeLibraryExpression("INC", "λ a b c.b(a b c)");
-        storeLibraryExpression("SUC", "INC");
+        storeLibraryExpression("SUCC", "INC");
         storeLibraryExpression("SUM", "λ a b. a INC b");
         storeLibraryExpression("PLUS", "SUM");
         storeLibraryExpression("MUL", "λ a b c. a(b c)");
@@ -251,6 +269,9 @@ public class LambdaInterpreter {
         storeLibraryExpression("LT", "λ x y. GTE y (INC x)");  // Less than.
         storeLibraryExpression("EQUALS", "λ x y. AND (GTE x y) (GTE y x)");
 
+        // Combinators.
+        storeLibraryExpression("Y", "λg.(λx.g(x x))(λx.g(x x))");
+
         // Pairs.
         storeLibraryExpression("PAIR", "λa b f.f a b");
         storeLibraryExpression("FIRST", "λp.p(λa b.a)");
@@ -258,6 +279,12 @@ public class LambdaInterpreter {
         storeLibraryExpression("CAR", "FIRST");
         storeLibraryExpression("CDR", "SECOND");
         storeLibraryExpression("NIL", "λx.TRUE");
+
+        // Division.
+        //storeLibraryExpression("DIV", "Y (λg q a b. LT a b (PAIR q a) (g (SUCC q) (SUB a b) b)) 0");
+        //storeLibraryExpression("IDIV", "λa b. FIRST (DIV a b)");
+        //storeLibraryExpression("MOD", "λa b. SECOND (DIV a b)");
+
 
         // Cycle.
         // FOR n f c == c(c(...c(c(f(0), f(1)),f(2))..),f(n)).

@@ -1,13 +1,31 @@
 package io.github.fedimser.lambda.calculus;
 
-import io.github.fedimser.lambda.interpreter.LambdaException;
-import io.github.fedimser.lambda.interpreter.SyntaxErrorException;
-import io.github.fedimser.lambda.interpreter.Token;
-import io.github.fedimser.lambda.interpreter.VariableStack;
+import io.github.fedimser.lambda.interpreter.*;
 
 import java.beans.Expression;
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 
 public final class LbdVariable extends LbdExpression {
+    private static LbdVariable[] INSTANCES = null;
+
+    public static LbdVariable forIndex(int deBruijnIndex) throws DepthException {
+        if (INSTANCES == null) {
+            INSTANCES = new LbdVariable[VariableStack.MAXIMAL_DEPTH+1];
+            for(int i=1;i<=VariableStack.MAXIMAL_DEPTH;i++) {
+                INSTANCES[i] = new LbdVariable(i);
+            }
+        }
+
+        assert (deBruijnIndex >= 1);
+
+        if (deBruijnIndex > VariableStack.MAXIMAL_DEPTH) {
+            throw new DepthException();
+        }
+
+        return INSTANCES[deBruijnIndex];
+    }
+
     private final int deBruijnIndex;
 
     private LbdVariable(int deBruijnIndex) {
@@ -18,13 +36,16 @@ public final class LbdVariable extends LbdExpression {
         return deBruijnIndex;
     }
 
-    public static LbdVariable forIndex(int deBruijnIndex) {
-        return new LbdVariable(deBruijnIndex);
-    }
+
 
     @Override
     public String toString() {
         return String.valueOf(deBruijnIndex);
+    }
+
+    @Override
+    protected void writeSignature(ByteArrayOutputStream buf) {
+        buf.write(deBruijnIndex);
     }
 
 
@@ -49,6 +70,7 @@ public final class LbdVariable extends LbdExpression {
     protected boolean hasVariable(int level) throws LambdaException {
         return (deBruijnIndex==level);
     }
+
 
     @Override
     protected LbdExpression increaseFreeIndices(int level) throws LambdaException {

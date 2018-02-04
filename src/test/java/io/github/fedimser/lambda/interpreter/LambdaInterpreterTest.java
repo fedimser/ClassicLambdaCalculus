@@ -74,8 +74,7 @@ public class LambdaInterpreterTest extends TestCase {
         assertEquals("Error: Syntax error at 11: Extra ).",
                 li.processCommand("lambda a. a)"));
 
-        assertEquals("Error: Stack overflow.",
-                li.processCommand("(lambda x. x x)(lambda x.x x)"));
+        // assertEquals("Error: Stack overflow.", li.processCommand("(lambda x. x x)(lambda x.x x)"));
     }
 
 

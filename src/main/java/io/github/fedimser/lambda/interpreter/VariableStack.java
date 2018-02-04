@@ -6,7 +6,7 @@ import java.util.Stack;
 
 public class VariableStack {
     private static final String VARIABLE_NAME_REGEX = "^[a-zA-Z_$][a-zA-Z_$0-9]*$";
-    private static final int MAXIMAL_DEPTH = 256;
+    public static final int MAXIMAL_DEPTH = 250;
     private static final String[] DEFAULT_VAR_NAMES = new String[]{
             "a","b","c","d","e","f","g","h","i","j","k","l","m",
             "n","o","p","q","r","s","t","u","v","w","x","y","z"};

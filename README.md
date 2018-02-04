@@ -8,4 +8,4 @@ References:
 
 2. A Tutorial Introduction to the Lambda Calculus, Raul Rojas, 1998, [pdf](http://www.inf.fu-berlin.de/lehre/WS03/alpi/lambda.pdf).
 
-3. [Collected Lambda Calculus Functions] (http://jwodder.freeshell.org/lambda.html).
+3. [Collected Lambda Calculus Functions](http://jwodder.freeshell.org/lambda.html).

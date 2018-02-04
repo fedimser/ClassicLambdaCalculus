@@ -2,9 +2,9 @@ package io.github.fedimser.lambda.calculus;
 
 
 import io.github.fedimser.lambda.interpreter.LambdaException;
-import io.github.fedimser.lambda.interpreter.LambdaInterpreter;
 import io.github.fedimser.lambda.interpreter.VariableStack;
 
+import java.io.ByteArrayOutputStream;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -14,11 +14,16 @@ public abstract class LbdExpression {
         CLASSIC,
         DE_BRUIJN,
         SHORT,
-        SHORT_DE_BRUIJN
+        SHORT_DE_BRUIJN,
+        SIGNATURE
     }
 
+    private int cachedHashCode=0;
     private Map<FormulaStyle, String> cachedFormulas =
             new EnumMap<FormulaStyle, String>(FormulaStyle.class);
+
+    // If it's not null, it must equal to reduced form of this expression.
+    protected LbdExpression reduced = null;
 
     /**
      * Applies beta-reduction and eta-conversion where possible.
@@ -30,11 +35,16 @@ public abstract class LbdExpression {
 
 
     public LbdExpression safeReduce() throws LambdaException {
-        try {
-            return this.reduce();
-        } catch (StackOverflowError ex) {
-            throw new LambdaException("Stack overflow");
+        RecursionControlStack.INSTANCE.reset();
+        if(this.reduced == null) {
+            reduced = this.reduce();
+            reduced.reduced = reduced;
         }
+        return reduced;
+    }
+
+    public boolean isReduced() throws LambdaException {
+        return (safeReduce() == this);
     }
 
     /**
@@ -110,6 +120,10 @@ public abstract class LbdExpression {
             } catch (LambdaException e) {
                 return "Error: " + e.getMessage();
             }
+        } else if (style == FormulaStyle.SIGNATURE) {
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            writeSignature(buf);
+            result = buf.toString();
         }
 
         cachedFormulas.put(style, result);
@@ -126,11 +140,18 @@ public abstract class LbdExpression {
         if (this==obj) return true;
         if (!(obj instanceof LbdExpression)) return false;
         LbdExpression second = (LbdExpression)obj;
-        return this.toString().equals(second.toString());
+        return this.getFormula(FormulaStyle.SIGNATURE).equals(second.getFormula(FormulaStyle.SIGNATURE));
     }
 
     @Override
     public int hashCode() {
-        return this.toString().hashCode();
+        if(cachedHashCode==0){
+            cachedHashCode = this.getFormula(FormulaStyle.SIGNATURE).hashCode();
+            assert (cachedHashCode!=0);
+        }
+        return cachedHashCode;
     }
+
+    protected abstract void writeSignature(ByteArrayOutputStream buf);
+
 }

@@ -2,8 +2,9 @@ package io.github.fedimser.lambda.calculus;
 
 
 import io.github.fedimser.lambda.interpreter.LambdaException;
-import io.github.fedimser.lambda.interpreter.SyntaxErrorException;
 import io.github.fedimser.lambda.interpreter.VariableStack;
+
+import java.io.ByteArrayOutputStream;
 
 
 public final class LbdAbstraction extends LbdExpression {
@@ -19,6 +20,11 @@ public final class LbdAbstraction extends LbdExpression {
     }
 
     public LbdExpression reduce() throws LambdaException {
+        if(this.reduced!=null) return this.reduced;
+        this.reduced = this;
+
+        RecursionControlStack.INSTANCE.push(this);
+
         // Try eta-conversion, namely:
         // λx.(f x) => f, if f doesn't have free x.
         if (body instanceof LbdApplication){
@@ -28,7 +34,7 @@ public final class LbdAbstraction extends LbdExpression {
                 if(((LbdVariable)x2).getDeBruijnIndex() == 1) {
                     LbdExpression f = fx.getFunction();
                     if(!f.hasVariable(1)) {
-                        return f.betaReduction(1, null).reduce();
+                        this.reduced = f.betaReduction(1, null).reduce();
                     }
                 }
             }
@@ -37,10 +43,11 @@ public final class LbdAbstraction extends LbdExpression {
         // Try reduce body.
         LbdExpression reducedBody = body.reduce();
         if (reducedBody != body) {
-           return (new LbdAbstraction(reducedBody)).reduce();
+            this.reduced = (new LbdAbstraction(reducedBody)).reduce();
         }
 
-        return this;
+        RecursionControlStack.INSTANCE.pop(this);
+        return this.reduced;
     }
 
     @Override
@@ -101,4 +108,9 @@ public final class LbdAbstraction extends LbdExpression {
         return  String.format("λ%s", body.getShortDeBruijnFormula());
     }
 
+    @Override
+    protected void writeSignature(ByteArrayOutputStream buf) {
+        buf.write(0);
+        this.body.writeSignature(buf);
+    }
 }
