@@ -183,6 +183,18 @@ public class LibraryTest extends TestCase {
         checkBool("LT 6 4", false);
     }
 
+    public void testMinMax() throws Exception {
+        checkInt("MIN 0 3", 0);
+        checkInt("MIN 7 2", 2);
+        checkInt("MIN 6 8", 6);
+        checkInt("MIN 4 4", 4);
+
+        checkInt("MAX 0 3", 3);
+        checkInt("MAX 7 2", 7);
+        checkInt("MAX 6 8", 8);
+        checkInt("MAX 4 4", 4);
+    }
+
     public void testPair() throws Exception {
         check("FIRST(PAIR 10 15)", "10");
         check("SECOND(PAIR 10 15)", "15");

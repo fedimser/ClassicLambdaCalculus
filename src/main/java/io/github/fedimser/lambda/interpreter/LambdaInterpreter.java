@@ -281,6 +281,10 @@ public class LambdaInterpreter {
         storeLibraryExpression("LT", "λ x y. GTE y (INC x)");  // Less than.
         storeLibraryExpression("EQUALS", "λ x y. AND (GTE x y) (GTE y x)");
 
+        // Minimum and maximum.
+        storeLibraryExpression("MIN", "λa b.(GTE a b) b a");
+        storeLibraryExpression("MAX", "λa b.(GTE a b) a b");
+
         // Combinators.
         storeLibraryExpression("Y", "λg.(λx.g(x x))(λx.g(x x))");
 
