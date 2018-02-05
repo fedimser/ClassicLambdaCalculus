@@ -27,4 +27,8 @@ public class LbdExpressionTest extends TestCase {
         assertEquals(false, li.parseReduce("FALSE").asBoolean());
         assertEquals(true, li.parseReduce("TRUE").asBoolean());
     }
+
+    public void testDeepReduction() throws Exception {
+        assertEquals(li.parseReduce("λx.SUB 10 9"), li.parseReduce("λa b.b"));
+    }
 }
