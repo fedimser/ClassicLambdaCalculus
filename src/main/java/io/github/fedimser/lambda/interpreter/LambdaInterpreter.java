@@ -105,6 +105,9 @@ public class LambdaInterpreter {
             } else if (tokens.size() >=2 && tokens.get(0).hasText("bool")) {
                 LbdExpression expression = parseTokenGroup(tokens.subList(1, tokens.size())).safeReduce();
                 return String.valueOf(expression.asBoolean());
+            } else if (tokens.size() >=2 && tokens.get(0).hasText("nored")) {
+                LbdExpression expression = parseTokenGroup(tokens.subList(1, tokens.size()));
+                return expression.getFormula(FormulaStyle.SHORT);
             } else {
                 LbdExpression expression = parseTokenGroup(tokens).safeReduce();
                 return expression.getFormula(FormulaStyle.CLASSIC);
@@ -206,14 +209,22 @@ public class LambdaInterpreter {
 
 
 
-    private void storeLibraryExpression(String name, String expression) throws LambdaException {
+    private void storeLibraryExpression(String name, String expression, boolean fast) throws LambdaException {
         try {
-            storeExpression(name, parse(expression).safeReduce());
+            LbdExpression exp = parse(expression);
+            if(!fast) {
+                exp = exp.safeReduce();
+            }
+            storeExpression(name, exp);
         } catch (LambdaException e) {
             System.out.println("Couldn't parseReduce: " + expression);
             throw e;
         }
         libraryNames.add(name);
+    }
+
+    private void storeLibraryExpression(String name, String expression) throws LambdaException {
+        storeLibraryExpression(name, expression, false);
     }
 
     private void storeExpression(String name, LbdExpression expression) throws LambdaException {
@@ -271,6 +282,7 @@ public class LambdaInterpreter {
         storeLibraryExpression("Φ", "λ p z.z(INC(p TRUE))(p TRUE)");
         storeLibraryExpression("PRED", "λn.n Φ(λ z.z 0 0)FALSE");
         storeLibraryExpression("SUB", "λ a b. b PRED a");
+        storeLibraryExpression("MINUS", "SUB");
 
 
         // Equality and inequalities.
@@ -287,6 +299,17 @@ public class LambdaInterpreter {
 
         // Combinators.
         storeLibraryExpression("Y", "λg.(λx.g(x x))(λx.g(x x))");
+        storeLibraryExpression("R", "(λr n.ISZERO n 0(n SUCC(r(PRED n))))");
+
+        // Division.
+        // $div1 == Y $div1_rec == (a,b)-> (a-1//b).
+        // Therefore, a//b = $div1 (a+1,b,0)
+        // $div1 (a,b) = 0, if a<=b.
+        //             = $div1(a-b, b)+1, otherwise.
+        storeLibraryExpression("$div1_rec", "λr a b. (GTE b a) 0 (SUCC (r (MINUS a b) b))");
+        //storeLibraryExpression("$div1", "Y $div1_rec", true);
+        //storeLibraryExpression("DIV", "λ a b. $div1 (SUCC a) b");
+
 
         // Pairs.
         storeLibraryExpression("PAIR", "λa b f.f a b");
@@ -297,9 +320,6 @@ public class LambdaInterpreter {
         storeLibraryExpression("NIL", "λx.TRUE");
 
         // Division.
-        //storeLibraryExpression("DIV", "Y (λg q a b. LT a b (PAIR q a) (g (SUCC q) (SUB a b) b)) 0");
-        //storeLibraryExpression("IDIV", "λa b. FIRST (DIV a b)");
-        //storeLibraryExpression("MOD", "λa b. SECOND (DIV a b)");
 
 
         // Cycle.

@@ -37,7 +37,11 @@ public abstract class LbdExpression {
     public LbdExpression safeReduce() throws LambdaException {
         RecursionControlStack.INSTANCE.reset();
         if(this.reduced == null) {
-            reduced = this.reduce();
+            try {
+                reduced = fastReduce(this).reduce();
+            } catch (StackOverflowError e) {
+                throw new LambdaException("Stack overflow");
+            }
             reduced.reduced = reduced;
         }
         return reduced;
@@ -214,6 +218,32 @@ public abstract class LbdExpression {
         } else {
             throw new LambdaException("Expression is not Church boolean");
         }
+    }
+
+    public static LbdExpression fastReduce(LbdExpression e) throws LambdaException {
+        for(int i=0;i<100;i++) {
+            if (e instanceof LbdApplication) {
+                LbdExpression lhs = ((LbdApplication) e).getFunction();
+                LbdExpression rhs = ((LbdApplication) e).getArgument();
+
+                if (lhs instanceof LbdAbstraction && rhs instanceof LbdAbstraction) {
+                    // if both sides of the application are values we can proceed and
+                    //substitute the rhs value for the variables that reference the
+                    // abstraction's parameter in the evaluation body and then evaluate the
+                    // abstraction's body.
+                    e = ((LbdAbstraction) lhs).getBody().betaReduction(1, rhs);
+                } else if (lhs instanceof LbdAbstraction) {
+                    // We should only evaluate rhs once lhs has been reduced to a value
+                    e = new LbdApplication(lhs, fastReduce(rhs));
+                } else {
+                    //Keep reducing lhs until it becomes a value
+                    e = new LbdApplication(fastReduce(lhs), rhs);
+                }
+            } else {
+                return e;
+            }
+        }
+        return e;
     }
 
 }

@@ -55,7 +55,7 @@ public final class LbdAbstraction extends LbdExpression {
         LbdExpression newReplacement = (replacement == null)?null : replacement.increaseFreeIndices(level);
         LbdExpression reducedBody = body.betaReduction(level+1, newReplacement) ;
         if (reducedBody != body) {
-            return (new LbdAbstraction(reducedBody)).reduce();
+            return (new LbdAbstraction(reducedBody));//.reduce();
         }
 
         return this;

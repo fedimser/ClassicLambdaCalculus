@@ -52,7 +52,7 @@ public final class LbdApplication extends LbdExpression {
         LbdExpression newFunction = function.betaReduction(level, replacement);
         LbdExpression newArgument = argument.betaReduction(level, replacement);
         if(newFunction!=function || newArgument!=argument) {
-            return (new LbdApplication(newFunction, newArgument)).reduce();
+            return (new LbdApplication(newFunction, newArgument));//.reduce();
         }
         return this;
     }
