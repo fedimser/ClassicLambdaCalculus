@@ -14,4 +14,17 @@ public class LbdExpressionTest extends TestCase {
         assertEquals("λab.a(ab)", churchTwo.getFormula(FormulaStyle.SHORT));
         assertEquals("λλ2(21)", churchTwo.getFormula(FormulaStyle.SHORT_DE_BRUIJN));
     }
+
+    public void testAsNatural() throws Exception {
+        assertEquals(0, li.parseReduce("0").asNatural());
+        assertEquals(1, li.parseReduce("1").asNatural());
+        assertEquals(2, li.parseReduce("2").asNatural());
+        assertEquals(10, li.parseReduce("10").asNatural());
+        assertEquals(42, li.parseReduce("42").asNatural());
+    }
+
+    public void testAsBoolean() throws Exception {
+        assertEquals(false, li.parseReduce("FALSE").asBoolean());
+        assertEquals(true, li.parseReduce("TRUE").asBoolean());
+    }
 }

@@ -10,6 +10,14 @@ public class LibraryTest extends TestCase {
         assertTrue(li.parseReduce(exp1).equals(li.parseReduce(exp2)));
     }
 
+    private void checkInt(String exp, int value) throws Exception {
+        assertEquals(value, li.parseReduce(exp).asNatural());
+    }
+
+    private void checkBool(String exp, boolean value) throws Exception {
+        assertEquals(value, li.parseReduce(exp).asBoolean());
+    }
+
     public void testIncrement() throws Exception {
         check("INC 0" ,"1");
         check("INC 1" ,"2");
@@ -112,66 +120,67 @@ public class LibraryTest extends TestCase {
         check("POW 3 2", "9");
         check("POW 3 3", "27");
         check("POW 3 4", "81");
-        check("POW 5 2", "25");
-        check("POW 10 2", "100");
+        checkInt("POW 5 2", 25);
+        checkInt("POW 10 2", 100);
     }
 
     public void testLogic() throws Exception {
-        check("FALSE", "0");
+        checkBool("FALSE", false);
+        checkBool("TRUE", true);
 
-        check("NOT FALSE", "TRUE");
-        check("NOT TRUE", "FALSE");
+        checkBool("NOT FALSE", true);
+        checkBool("NOT TRUE", false);
 
-        check("AND FALSE FALSE", "FALSE");
-        check("AND FALSE TRUE", "FALSE");
-        check("AND TRUE FALSE", "FALSE");
-        check("AND TRUE TRUE", "TRUE");
+        checkBool("AND FALSE FALSE", false);
+        checkBool("AND FALSE TRUE", false);
+        checkBool("AND TRUE FALSE", false);
+        checkBool("AND TRUE TRUE", true);
 
-        check("OR FALSE FALSE", "FALSE");
-        check("OR FALSE TRUE", "TRUE");
-        check("OR TRUE FALSE", "TRUE");
-        check("OR TRUE TRUE", "TRUE");
+        checkBool("OR FALSE FALSE", false);
+        checkBool("OR FALSE TRUE", true);
+        checkBool("OR TRUE FALSE", true);
+        checkBool("OR TRUE TRUE", true);
     }
 
     public void testComparison() throws Exception {
-        check("ISZERO 0", "TRUE");
-        check("ISZERO 1", "FALSE");
-        check("ISZERO 10", "FALSE");
+        checkBool("ISZERO 0", true);
+        checkBool("ISZERO 1", false);
+        checkBool("ISZERO 10", false);
 
-        check("EQUALS 0 0", "TRUE");
-        check("EQUALS 1 1", "TRUE");
-        check("EQUALS 5 5", "TRUE");
-        check("EQUALS 48 48", "TRUE");
+        checkBool("EQUALS 0 0", true);
+        checkBool("EQUALS 1 1", true);
+        checkBool("EQUALS 5 5", true);
+        checkBool("EQUALS 48 48", true);
 
-        check("EQUALS 1 0", "FALSE");
-        check("EQUALS 2 8", "FALSE");
-        check("EQUALS 7 3", "FALSE");
+        checkBool("EQUALS 1 0", false);
+        checkBool("EQUALS 2 8", false);
+        checkBool("EQUALS 7 3", false);
 
-        check("GTE 1 0", "TRUE");
-        check("GTE 3 2", "TRUE");
-        check("GTE 3 3", "TRUE");
-        check("GTE 16 10", "TRUE");
-        check("GTE 2 3", "FALSE");
-        check("GTE 7 19", "FALSE");
+        checkBool("GTE 1 0", true);
+        checkBool("GTE 3 2", true);
+        checkBool("GTE 3 3", true);
+        checkBool("GTE 16 10", true);
+        checkBool("GTE 2 3", false);
+        checkBool("GTE 7 19", false);
 
-        check("LTE 1 0", "FALSE");
-        check("LTE 3 2", "FALSE");
-        check("LTE 3 3", "TRUE");
-        check("LTE 16 10", "FALSE");
-        check("LTE 2 3", "TRUE");
-        check("LTE 7 19", "TRUE");
+        checkBool("LTE 1 0", false);
+        checkBool("LTE 3 2", false);
+        checkBool("LTE 3 3", true);
+        checkBool("LTE 16 10", false);
+        checkBool("LTE 2 3", true);
+        checkBool("LTE 7 19", true);
 
-        check("GT 0 0", "FALSE");
-        check("GT 1 0", "TRUE");
-        check("GT 4 3", "TRUE");
-        check("GT 4 4", "FALSE");
-        check("GT 4 6", "FALSE");
+        checkBool("GT 0 0", false);
+        checkBool("GT 1 0", true);
+        checkBool("GT 4 3", true);
+        checkBool("GT 4 4", false);
+        checkBool("GT 4 6", false);
 
-        check("LT 0 0", "FALSE");
-        check("LT 0 1", "TRUE");
-        check("LT 3 4", "TRUE");
-        check("LT 4 4", "FALSE");
-        check("LT 6 4", "FALSE");
+        checkBool("LT 0 0", false);
+        checkBool("LT 0 1", true);
+        checkBool("LT 3 4", true);
+        checkBool("LT 4 4", false);
+        checkBool("LT 6 4", false);
     }
 
     public void testPair() throws Exception {
@@ -186,11 +195,11 @@ public class LibraryTest extends TestCase {
 
 
     public void testFactorial() throws Exception {
-        check("FACTORIAL 0", "1");
-        check("FACTORIAL 1", "1");
-        check("FACTORIAL 2", "2");
-        check("FACTORIAL 3", "6");
-        check("FACTORIAL 4", "24");
-        check("FACTORIAL 5", "SUM 100 20");
+        checkInt("FACTORIAL 0", 1);
+        checkInt("FACTORIAL 1", 1);
+        checkInt("FACTORIAL 2", 2);
+        checkInt("FACTORIAL 3", 6);
+        checkInt("FACTORIAL 4", 24);
+        checkInt("FACTORIAL 5", 120);
     }
 }

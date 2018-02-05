@@ -52,6 +52,19 @@ public class LambdaInterpreterTest extends TestCase {
         assertEquals("λλ2(21)", li.processCommand("db_short 2"));
     }
 
+    public void testNaturalEvaluation() {
+        LambdaInterpreter li = new LambdaInterpreter();
+        assertEquals("5", li.processCommand("int SUM 2 3"));
+        assertEquals("64", li.processCommand("int 2 8"));
+    }
+
+    public void testBooleanEvaluation() {
+        LambdaInterpreter li = new LambdaInterpreter();
+        assertEquals("true", li.processCommand("bool ISZERO 0"));
+        assertEquals("false", li.processCommand("bool ISZERO 1"));
+    }
+
+
     public void testErrors() {
         LambdaInterpreter li = new LambdaInterpreter();
         assertEquals("Error: Empty command.", li.processCommand(""));
@@ -73,6 +86,12 @@ public class LambdaInterpreterTest extends TestCase {
                 li.processCommand("lambda a. (a"));
         assertEquals("Error: Syntax error at 11: Extra ).",
                 li.processCommand("lambda a. a)"));
+
+        assertEquals("Error: Expression is not Church natural.",
+                li.processCommand("int TRUE"));
+        assertEquals("Error: Expression is not Church boolean.",
+                li.processCommand("bool 2"));
+
 
         // assertEquals("Error: Stack overflow.", li.processCommand("(lambda x. x x)(lambda x.x x)"));
     }

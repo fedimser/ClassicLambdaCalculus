@@ -43,8 +43,8 @@ public abstract class LbdExpression {
         return reduced;
     }
 
-    public boolean isReduced() throws LambdaException {
-        return (safeReduce() == this);
+    public boolean isReduced() {
+        return (reduced == this);
     }
 
     /**
@@ -153,5 +153,67 @@ public abstract class LbdExpression {
     }
 
     protected abstract void writeSignature(ByteArrayOutputStream buf);
+
+    /**
+     * If expression is Church natural, returns number it represents.
+     * Otherwise returns -1.
+     * Assumes that expression is reduced. Otherwise throws assertion error.
+     * @return Corresponding number or -1 if it is not Church natural.
+     */
+    private int extractNatural() {
+        assert (isReduced());
+
+        LbdExpression t = this;
+        if(!(t instanceof LbdAbstraction)) return -1;
+        t = ((LbdAbstraction)t).getBody();
+
+        if (t instanceof LbdVariable) {
+            assert(((LbdVariable) t).getDeBruijnIndex() == 1);
+            return 1;
+        } else if (t instanceof  LbdAbstraction) {
+            t= ((LbdAbstraction) t).getBody();
+        } else {
+            return -1;
+        }
+
+        for(int i=0;;i++) {
+            if(t instanceof LbdVariable) {
+                if (((LbdVariable)t).getDeBruijnIndex() == 1) {
+                    return i;
+                } else {
+                    return -1;
+                }
+            } else if (t instanceof LbdApplication) {
+                LbdExpression left = ((LbdApplication)t).getFunction();
+                if (!(left instanceof LbdVariable)) return -1;
+                if (((LbdVariable)left).getDeBruijnIndex()!=2) return -1;
+                t = ((LbdApplication)t).getArgument();
+            } else {
+                return -1;
+            }
+        }
+    }
+
+    public int asNatural() throws LambdaException {
+        if (!isReduced()) throw new LambdaException("Expression is not reduced");
+        int result = extractNatural();
+        if(result==-1) {
+            throw new LambdaException("Expression is not Church natural");
+        } else {
+            return result;
+        }
+    }
+
+    public boolean asBoolean() throws LambdaException {
+        if (!isReduced()) throw new LambdaException("Expression is not reduced");
+        String formula = getFormula(FormulaStyle.SHORT_DE_BRUIJN);
+        if(formula.equals("λλ2")){
+            return true;
+        } else if (formula.equals("λλ1")) {
+            return false;
+        } else {
+            throw new LambdaException("Expression is not Church boolean");
+        }
+    }
 
 }

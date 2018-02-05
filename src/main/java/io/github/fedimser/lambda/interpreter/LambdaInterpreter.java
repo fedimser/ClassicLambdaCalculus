@@ -51,6 +51,12 @@ public class LambdaInterpreter {
      *    Evaluates expression, prints result of evaluation in DE_BRUIJN_SHORT style.
      *    If it's impossible (namely, if depth is more than 26), prints
      *      "Error: Too deep for short style."
+     *   - int [Expression]
+     *     Evaluates expression and prints corresponding Church natural.
+     *     If it is not Church natural, prints ("Error: Expression is not Church natural.").
+     *   - bool [Expression]
+     *     Evaluates expression and prints corresponding Church boolean.
+     *     If it is not Church boolean, prints ("Error: Expression is not Church boolean.").
      * This is command-line interface of interpreter.
      * @param command User command.
      * @return Answer to be printed to console.
@@ -93,6 +99,12 @@ public class LambdaInterpreter {
             } else if (tokens.size() >=2 && tokens.get(0).hasText("db_short")) {
                 LbdExpression expression = parseTokenGroup(tokens.subList(1, tokens.size())).safeReduce();
                 return expression.getFormula(FormulaStyle.SHORT_DE_BRUIJN);
+            } else if (tokens.size() >=2 && tokens.get(0).hasText("int")) {
+                LbdExpression expression = parseTokenGroup(tokens.subList(1, tokens.size())).safeReduce();
+                return String.valueOf(expression.asNatural());
+            } else if (tokens.size() >=2 && tokens.get(0).hasText("bool")) {
+                LbdExpression expression = parseTokenGroup(tokens.subList(1, tokens.size())).safeReduce();
+                return String.valueOf(expression.asBoolean());
             } else {
                 LbdExpression expression = parseTokenGroup(tokens).safeReduce();
                 return expression.getFormula(FormulaStyle.CLASSIC);
