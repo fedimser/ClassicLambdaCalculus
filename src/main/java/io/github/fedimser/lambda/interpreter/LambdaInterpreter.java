@@ -260,6 +260,7 @@ public class LambdaInterpreter {
         storeLibraryExpression("SUCC", "INC");
         storeLibraryExpression("SUM", "λ a b. a INC b");
         storeLibraryExpression("PLUS", "SUM");
+        storeLibraryExpression("ADD", "SUM");
         storeLibraryExpression("MUL", "λ a b c. a(b c)");
         storeLibraryExpression("POW", "λ a b. b a");
         storeLibraryExpression("SQUARE", "λ x . MUL x x");
@@ -301,15 +302,8 @@ public class LambdaInterpreter {
         storeLibraryExpression("Y", "λg.(λx.g(x x))(λx.g(x x))");
         storeLibraryExpression("R", "(λr n.ISZERO n 0(n SUCC(r(PRED n))))");
 
-        // Division.
-        // $div1 == Y $div1_rec == (a,b)-> (a-1//b).
-        // Therefore, a//b = $div1 (a+1,b,0)
-        // $div1 (a,b) = 0, if a<=b.
-        //             = $div1(a-b, b)+1, otherwise.
-        storeLibraryExpression("$div1_rec", "λr a b. (GTE b a) 0 (SUCC (r (MINUS a b) b))");
-        //storeLibraryExpression("$div1", "Y $div1_rec", true);
-        //storeLibraryExpression("DIV", "λ a b. $div1 (SUCC a) b");
-
+        // Conditional helpers.
+        storeLibraryExpression("INC_IF", "λx c. c (INC x) x");
 
         // Pairs.
         storeLibraryExpression("PAIR", "λa b f.f a b");
@@ -319,10 +313,7 @@ public class LambdaInterpreter {
         storeLibraryExpression("CDR", "SECOND");
         storeLibraryExpression("NIL", "λx.TRUE");
 
-        // Division.
-
-
-        // Cycle.
+        // Maps range of integers [0 .. n] with f and reduces with c.
         // FOR n f c == c(c(...c(c(f(0), f(1)),f(2))..),f(n)).
         // c is "collector" function. It's recommended to be symmetric and associative.
         // '$NP' is helper function to construct cycle.
@@ -331,6 +322,21 @@ public class LambdaInterpreter {
 
         // Functions that use cycles.
         storeLibraryExpression("FACTORIAL", "λn. FOR (PRED n) INC MUL");
+
+        // Integer division can be expressed using for loop:
+        // def div(a, b):
+        //   x, y = b, 0
+        //   for _ in range(a+1):
+        //     x, y = x + b, (y+1 if x<=a else y)
+        //   return y
+        // This is extremely inefficient, but works.
+        String divLoopBody =
+                "λ xy.(PAIR (ADD (FIRST xy) b) (INC_IF (SECOND xy) (GTE a (FIRST xy))))";
+        storeLibraryExpression("DIV", "λ a b. SECOND((a (" + divLoopBody + ")) (PAIR b 0) )");
+
+        // Remainder.
+        // a % b = a - (a / b) * b.
+        storeLibraryExpression("MOD", "λ a b. SUB a (MUL (DIV a b) b)");
     }
 
 

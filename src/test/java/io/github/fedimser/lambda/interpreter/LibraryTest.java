@@ -87,7 +87,39 @@ public class LibraryTest extends TestCase {
     }
 
     public void testDivision() throws Exception {
-        //check("IDIV 4 2" ,"2");
+        check("DIV 0 1" ,"0");
+        check("DIV 1 1" ,"1");
+        check("DIV 2 1" ,"2");
+        check("DIV 10 1" ,"10");
+
+        check("DIV 0 2" ,"0");
+        check("DIV 1 2" ,"0");
+        check("DIV 2 2" ,"1");
+        check("DIV 3 2" ,"1");
+        check("DIV 4 2" ,"2");
+        check("DIV 7 2" ,"3");
+        check("DIV 10 2" ,"5");
+        check("DIV 15 2" ,"7");
+
+        check("DIV 1 3" ,"0");
+        check("DIV 3 3" ,"1");
+        check("DIV 10 3" ,"3");
+    }
+
+    public void testRemainder()throws Exception {
+        check("MOD 0 1" ,"0");
+        check("MOD 5 1" ,"0");
+
+        check("MOD 0 2" ,"0");
+        check("MOD 1 2" ,"1");
+        check("MOD 5 2" ,"1");
+
+        check("MOD 1 3" ,"1");
+        check("MOD 4 3" ,"1");
+        check("MOD 6 3" ,"0");
+        check("MOD 8 3" ,"2");
+
+        check("MOD 7 6" ,"1");
     }
 
     public void testSquare() throws Exception {
@@ -211,5 +243,10 @@ public class LibraryTest extends TestCase {
         checkInt("FACTORIAL 3", 6);
         checkInt("FACTORIAL 4", 24);
         checkInt("FACTORIAL 5", 120);
+    }
+
+    public void testConditionalIncrement() throws Exception {
+        check("INC_IF 2 FALSE", "2");
+        check("INC_IF 2 TRUE", "3");
     }
 }
